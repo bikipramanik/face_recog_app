@@ -1,3 +1,4 @@
+import 'package:face_recog_app/handle_camera_access.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -16,7 +17,7 @@ class HomeView extends StatelessWidget {
             children: [
               InkWell(
                 onTap: () {
-                  Get.snackbar("Face Register", "Openning the camera for face registration");
+                  handleCameraAccess("Face Registration");
                 },
                 child: Container(
                   height: MediaQuery.sizeOf(context).height * 0.18,
@@ -34,7 +35,7 @@ class HomeView extends StatelessWidget {
             children: [
               InkWell(
                 onTap: () {
-                  Get.snackbar("Face Verify", "Openning the camera for face verification");
+                  handleCameraAccess("Face Verification");
                 },
                 child: Container(
                   height: MediaQuery.sizeOf(context).height * 0.18,
