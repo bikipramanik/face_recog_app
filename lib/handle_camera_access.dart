@@ -1,7 +1,7 @@
 import 'package:get/get.dart';
 import 'package:permission_handler/permission_handler.dart';
 
-Future<void> handleCameraAccess(String mode) async {
+Future<bool> handleCameraAccess(String mode) async {
   var status = await Permission.camera.status;
 
   if (status.isDenied) {
@@ -9,7 +9,7 @@ Future<void> handleCameraAccess(String mode) async {
   }
 
   if (status.isGranted) {
-    Get.snackbar(mode, "Camera permission granted. Opening camera...", snackPosition: SnackPosition.BOTTOM);
+    return true;
   } else if (status.isPermanentlyDenied) {
     Get.defaultDialog(
       title: "Camera Permission Required",
@@ -21,7 +21,9 @@ Future<void> handleCameraAccess(String mode) async {
         Get.back();
       },
     );
+    return false;
   } else {
     Get.snackbar("Permission Denied", "Camera permission is required to proceed.", snackPosition: SnackPosition.BOTTOM);
+    return false;
   }
 }
