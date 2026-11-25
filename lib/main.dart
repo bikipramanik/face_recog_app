@@ -1,6 +1,6 @@
-import 'package:face_recog_app/home_view.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get_navigation/get_navigation.dart';
+import 'core/constants/app_colors.dart';
+import 'features/home/presentation/screens/home_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -12,6 +12,14 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const GetMaterialApp(home: HomeView());
+    return MaterialApp(
+      title: 'Face Recognition App',
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(seedColor: AppColors.primary),
+        useMaterial3: true,
+      ),
+      home: const HomeScreen(),
+    );
   }
 }
