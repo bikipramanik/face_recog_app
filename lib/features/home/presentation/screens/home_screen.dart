@@ -1,10 +1,11 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import '../../../../core/constants/app_colors.dart';
-import '../../../../core/utils/camera_permission_helper.dart';
-import '../../../../core/utils/face_storage_service.dart';
-import '../../../face_registration/presentation/screens/register_screen.dart';
-import '../widgets/home_action_card.dart';
+import 'package:face_recog_app/core/constants/app_colors.dart';
+import 'package:face_recog_app/core/utils/camera_permission_helper.dart';
+import 'package:face_recog_app/core/utils/face_storage_service.dart';
+import 'package:face_recog_app/features/face_registration/presentation/screens/register_screen.dart';
+import 'package:face_recog_app/features/face_verification/presentation/screens/verify_screen.dart';
+import 'package:face_recog_app/features/home/presentation/widgets/home_action_card.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -104,25 +105,20 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _onVerifyTap(BuildContext context) async {
-    if (_registeredFaceFile == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Please register a face first before verifying."),
-          backgroundColor: AppColors.error,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-      return;
-    }
-
     final granted =
         await CameraPermissionHelper.requestCameraPermission(context);
     if (granted && context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Face Verification screen coming soon!"),
-          behavior: SnackBarBehavior.floating,
-        ),
+      if (_registeredFaceFile == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Notice: No registered face found. You can still test the camera."),
+            behavior: SnackBarBehavior.floating,
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+      Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => const VerifyScreen()),
       );
     }
   }
