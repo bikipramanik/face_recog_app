@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/utils/face_storage_service.dart';
 import '../../bloc/register_bloc.dart';
 import '../../bloc/register_event.dart';
 import '../../bloc/register_state.dart';
@@ -31,9 +32,33 @@ class _RegisterView extends StatelessWidget {
       barrierDismissible: false,
       builder: (dialogContext) => RegistrationSuccessDialog(
         imagePath: imagePath,
-        onSaveAndExit: () {
-          Navigator.of(dialogContext).pop(); // Close dialog
-          Navigator.of(context).pop(); // Return to home screen
+        onSaveAndExit: () async {
+          try {
+            await FaceStorageService.saveRegisteredFace(imagePath);
+            if (dialogContext.mounted) {
+              Navigator.of(dialogContext).pop(); // Close dialog
+            }
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text("Face photo registered and saved locally!"),
+                  backgroundColor: AppColors.success,
+                  behavior: SnackBarBehavior.floating,
+                ),
+              );
+              Navigator.of(context).pop(true); // Return to home screen with success flag
+            }
+          } catch (e) {
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text("Failed to save image locally: $e"),
+                  backgroundColor: AppColors.error,
+                  behavior: SnackBarBehavior.floating,
+                ),
+              );
+            }
+          }
         },
         onRetake: () {
           Navigator.of(dialogContext).pop(); // Close dialog
