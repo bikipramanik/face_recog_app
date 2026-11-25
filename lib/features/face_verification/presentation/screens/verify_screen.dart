@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:face_recog_app/core/constants/app_colors.dart';
+import 'package:face_recog_app/core/utils/face_recognition_service.dart';
 import 'package:face_recog_app/core/utils/face_storage_service.dart';
 import 'package:face_recog_app/features/face_registration/presentation/widgets/capture_button.dart';
 import 'package:face_recog_app/features/face_registration/presentation/widgets/face_guide_overlay.dart';
@@ -23,23 +24,47 @@ class VerifyScreen extends StatelessWidget {
   }
 }
 
-class _VerifyView extends StatelessWidget {
+class _VerifyView extends StatefulWidget {
   const _VerifyView();
 
-  Future<void> _showCapturedDialog(
-    BuildContext context,
-    String imagePath,
-  ) async {
-    final registeredFile = await FaceStorageService.getRegisteredFaceFile();
+  @override
+  State<_VerifyView> createState() => _VerifyViewState();
+}
 
-    if (!context.mounted) return;
+class _VerifyViewState extends State<_VerifyView> {
+  bool _isVerifying = false;
+
+  Future<void> _processVerification(
+    BuildContext context,
+    String capturedImagePath,
+  ) async {
+    setState(() {
+      _isVerifying = true;
+    });
+
+    final registeredFile = await FaceStorageService.getRegisteredFaceFile();
+    FaceVerificationResult? result;
+
+    if (registeredFile != null) {
+      result = await FaceRecognitionService.verifyFaces(
+        registeredImagePath: registeredFile.path,
+        capturedImagePath: capturedImagePath,
+      );
+    }
+
+    if (!mounted) return;
+
+    setState(() {
+      _isVerifying = false;
+    });
 
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (dialogContext) => VerificationResultDialog(
-        capturedImagePath: imagePath,
+        capturedImagePath: capturedImagePath,
         registeredImagePath: registeredFile?.path,
+        result: result,
         onDone: () {
           Navigator.of(dialogContext).pop(); // Close dialog
           Navigator.of(context).pop(); // Return to home screen
@@ -71,8 +96,9 @@ class _VerifyView extends StatelessWidget {
           }
 
           if (state.status == VerifyStatus.captured &&
-              state.capturedImagePath != null) {
-            _showCapturedDialog(context, state.capturedImagePath!);
+              state.capturedImagePath != null &&
+              !_isVerifying) {
+            _processVerification(context, state.capturedImagePath!);
           }
         },
         builder: (context, state) {
@@ -183,23 +209,49 @@ class _VerifyView extends StatelessWidget {
                 ),
               ),
 
-              // 4. Bottom Controls: Shutter / Verify Button
-              SafeArea(
-                child: Align(
-                  alignment: Alignment.bottomCenter,
-                  child: Padding(
-                    padding: const EdgeInsets.only(bottom: 30.0),
-                    child: CaptureButton(
-                      isCapturing: state.status == VerifyStatus.capturing,
-                      onTap: () {
-                        context
-                            .read<VerifyBloc>()
-                            .add(const VerifyCaptureImage());
-                      },
+              // 4. Verification processing overlay
+              if (_isVerifying)
+                Container(
+                  color: Colors.black54,
+                  child: const Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        CircularProgressIndicator(
+                          valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+                        ),
+                        SizedBox(height: 16),
+                        Text(
+                          "Analyzing facial features...",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
-              ),
+
+              // 5. Bottom Controls: Shutter / Verify Button
+              if (!_isVerifying)
+                SafeArea(
+                  child: Align(
+                    alignment: Alignment.bottomCenter,
+                    child: Padding(
+                      padding: const EdgeInsets.only(bottom: 30.0),
+                      child: CaptureButton(
+                        isCapturing: state.status == VerifyStatus.capturing,
+                        onTap: () {
+                          context
+                              .read<VerifyBloc>()
+                              .add(const VerifyCaptureImage());
+                        },
+                      ),
+                    ),
+                  ),
+                ),
             ],
           );
         },
